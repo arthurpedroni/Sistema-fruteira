@@ -47,15 +47,16 @@ def vende_frutas(fruta,qtd,estoque,caixa):
         dados_estoque = pd.read_csv(estoque)
         lista_fruta = list(dados_estoque['Fruta'])
         lista_qtd = list(dados_estoque['Quantidade'])
+        lista_pVenda = list(dados_estoque['pVenda'])
+        lista_pCompra = list(dados_estoque['pCompra'])
     except FileNotFoundError:
         print("Arquivo não encontrado!")
         return False
     
     try:
         dados_caixa = pd.read_csv(caixa)
-        lista_caixa = list(dados_estoque['Caixa'])
-        lista_usuario = list(dados_estoque['Usuario'])
-        lista_data = list(dados_estoque['Data'])
+        lista_caixa = list(dados_caixa['Caixa'])
+        lista_usuario = list(dados_caixa['Usuario'])
     except FileNotFoundError:
         print("Arquivo não encontrado!")
         return False
@@ -71,9 +72,13 @@ def vende_frutas(fruta,qtd,estoque,caixa):
     if qtd_existente - qtd < 0:
         print("Não possui essa quantidade em estoque!")
         return False
+    pVenda = lista_pVenda[indice_fruta]
+    pCompra = lista_pCompra[indice_fruta]
     print("Venda efetuada com sucesso!")
     dados_estoque.at[indice_fruta, 'Quantidade'] = qtd_existente - qtd
     dados_estoque.to_csv(estoque,index = False)
+    dados_caixa.loc[len(dados_caixa)] = [lista_caixa[-1] + (pVenda * qtd), conta, '25/06/2025']
+    dados_caixa.to_csv(estoque,index = False)
     return True
 
 def add_frutas(fruta,qtd,pVenda,pCompra,arq):
@@ -98,42 +103,47 @@ def add_frutas(fruta,qtd,pVenda,pCompra,arq):
         return True
     else:
         return False
-    
-# print("Olá! Seja bem vindo ao sistema da fruteira!\nPor favor, faça seu login ou se não tiver uma conta, crie-a!")
-# opcao = int(input("1 - Cadastrar usuário\n2 - Login de usuário\n")) 
-# while opcao != 1 and opcao != 2:                    
-#     print("Opcão inválida")
-#     opcao = int(input("1 - Cadastrar usuário\n2 - Login de usuário\n"))
+while True:    
+    print("Olá! Seja bem vindo ao sistema da fruteira!\nPor favor, faça seu login ou se não tiver uma conta, crie-a!")
+    opcao = int(input("1 - Login de usuário\n2 - Cadastrar usuário\n3 - Sair\n")) 
+    while opcao not in [1,2,3]:                    
+        print("Opcão inválida")
+        opcao = int(input("1 - Login de usuário \n2 - Cadastrar usuário\n"))
+    match opcao:
+        case 1:
+            n = input("Insira seu nome de usuário: ")
+            s = input("Insira sua senha: ")
+            sucesso, conta = login(n,s,'Usuarios.csv')
 
-# if opcao == 2:
-#     n = input("Insira seu nome de usuário: ")
-#     s = input("Insira sua senha: ")
-#     sucesso, conta = login(n,s,'Usuarios.csv')
-
-# elif opcao == 1:
-#     n = input("Qual seu nome: ")
-#     s = input("Qual sua senha: ")
-#     valida = cadastrar_usuario(n,s,'Usuarios.csv')
-#     print("Conta registrada. Por favor, faça o login novamente.")
-#     sucesso, conta = login(n,s,'Usuarios.csv')
-
-while True:
-    print("Selecione a opção desejada")
-    try:
-        opcao = int(input("1 - Vender frutas\n"))
-        break 
-    except ValueError:
-        print("Valor inválido! Digite um número.")
-match opcao:
-    case 1:
-        x = input()
-        y = int(input())
-        vende_frutas(x,y,'Estoque.csv','Caixa.csv')
-    case 2:
-        f = input()
-        q = int(input())
-        pv = float(input())
-        pc = float(input())
-        add_frutas(f,q,pv,pc,'Estoque.csv')
-    case _:
-        print("Opção inválida.")
+        case 2:
+            n = input("Qual seu nome: ")
+            s = input("Qual sua senha: ")
+            valida = cadastrar_usuario(n,s,'Usuarios.csv')
+            print("Conta registrada. Fazendo login...")
+            sucesso, conta = login(n,s,'Usuarios.csv')
+        case 3:
+            break
+            
+    while True:
+        while True:
+            print("Selecione a opção desejada")
+            try:
+                opcao = int(input("1 - Vender frutas\n"))
+                break 
+            except ValueError:
+                print("Valor inválido! Digite um número.")
+                
+        match opcao:
+            case 1:
+                fruta = input("Nome da fruta: ")
+                qtd = int(input("Quantidade de frutas: "))
+                vende_frutas(fruta,qtd,'Estoque.csv','Caixa.csv')
+            case 2:
+                f = input()
+                q = int(input())
+                pv = float(input())
+                pc = float(input())
+                add_frutas(f,q,pv,pc,'Estoque.csv')
+            case _:
+                break
+        break
