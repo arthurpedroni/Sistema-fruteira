@@ -92,8 +92,9 @@ def add_frutas(fruta,qtd,pVenda,pCompra,arq):
         dados.to_csv(arq,index = False)
         return True
     elif fruta not in lista_fruta and qtd > 0:
-        dados.loc[len(dados)] = [fruta,qtd,pVenda,pCompra]
+        dados.loc[len(dados)] = [fruta, qtd, pVenda, pCompra]
         dados.to_csv(arq,index = False)
+        print("Adicionado com sucesso!")
         return True
     else:
         return False
@@ -128,5 +129,11 @@ match opcao:
         x = input()
         y = int(input())
         vende_frutas(x,y,'Estoque.csv','Caixa.csv')
+    case 2:
+        f = input()
+        q = int(input())
+        pv = float(input())
+        pc = float(input())
+        add_frutas(f,q,pv,pc,'Estoque.csv')
     case _:
         print("Opção inválida.")
