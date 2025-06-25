@@ -56,7 +56,6 @@ def vende_frutas(fruta,qtd,estoque,caixa):
     try:
         dados_caixa = pd.read_csv(caixa)
         lista_caixa = list(dados_caixa['Caixa'])
-        lista_usuario = list(dados_caixa['Usuario'])
     except FileNotFoundError:
         print("Arquivo não encontrado!")
         return False
@@ -73,12 +72,11 @@ def vende_frutas(fruta,qtd,estoque,caixa):
         print("Não possui essa quantidade em estoque!")
         return False
     pVenda = lista_pVenda[indice_fruta]
-    pCompra = lista_pCompra[indice_fruta]
     print("Venda efetuada com sucesso!")
     dados_estoque.at[indice_fruta, 'Quantidade'] = qtd_existente - qtd
     dados_estoque.to_csv(estoque,index = False)
     dados_caixa.loc[len(dados_caixa)] = [lista_caixa[-1] + (pVenda * qtd), conta, '25/06/2025']
-    dados_caixa.to_csv(estoque,index = False)
+    dados_caixa.to_csv(caixa, index=False)
     return True
 
 def add_frutas(fruta,qtd,pVenda,pCompra,arq):
