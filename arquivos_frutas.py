@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 def cadastrar_usuario(usuario,senha,arq):
     try:
@@ -7,7 +8,6 @@ def cadastrar_usuario(usuario,senha,arq):
     except (FileNotFoundError, pd.errors.EmptyDataError):
         dados = pd.DataFrame(columns=['Usuario','Senha'])
         dados.to_csv(arq, index=False)
-        return False
     
     lista_usu = list(dados['Usuario'])
     if usuario in lista_usu:
@@ -17,9 +17,9 @@ def cadastrar_usuario(usuario,senha,arq):
         while confirm_sen != senha:
             print("Senha diferente!")
             confirm_sen = input("Confirmar senha: ")
-        dados.loc[len(dados)] = [usuario,senha]
-        dados.to_csv(arq,index = False)
-        return True
+    dados.loc[len(dados)] = [usuario,senha]
+    dados.to_csv(arq,index = False)
+    return True
     
 def login(usuario, senha, arq):
     try:
@@ -51,27 +51,23 @@ def login(usuario, senha, arq):
     return True, usuario
     
     
-def vende_frutas(fruta,qtd,estoque,caixa):
+def vende_frutas(fruta,qtd,estoque,caixa,conta):
 
     try:
         dados_estoque = pd.read_csv(estoque)
     except (FileNotFoundError, pd.errors.EmptyDataError):
-        print("Arquivo não encontrado!")
         dados_estoque = pd.DataFrame(columns=['Fruta','Quantidade','pVenda','pCompra'])
-        dados_estoque.to_csv(estoque, index=False)
-                                     
+        dados_estoque.to_csv(estoque, index=False)                                   
     lista_fruta = list(dados_estoque['Fruta'])
-    lista_qtd = list(dados_estoque['Quantidade'])
     lista_pVenda = list(dados_estoque['pVenda'])
 
     try:
         dados_caixa = pd.read_csv(caixa)
     except (FileNotFoundError, pd.errors.EmptyDataError):
-        print("Arquivo não encontrado!")
         # Criar estrutura inicial do DataFrame com colunas
         dados_caixa = pd.DataFrame(columns=['Caixa', 'Usuario', 'Data'])
         # Adiciona a linha inicial com R$ 0
-        dados_caixa.loc[len(dados_caixa)] = [0, conta, '24/06/2025']
+        dados_caixa.loc[len(dados_caixa)] = [0, conta, datetime.now().strftime('%d/%m/%Y')]
         dados_caixa.to_csv(caixa, index=False)
     lista_caixa = list(dados_caixa['Caixa'])
 
@@ -79,7 +75,7 @@ def vende_frutas(fruta,qtd,estoque,caixa):
         print("A fruta não existe!")
         return False
     indice_fruta = lista_fruta.index(fruta)
-    qtd_existente = lista_qtd[indice_fruta]
+    qtd_existente = int(dados_estoque.at[indice_fruta, 'Quantidade'])
     if qtd <= 0:
         print("Quantidade inválida!")
         return False
@@ -91,30 +87,26 @@ def vende_frutas(fruta,qtd,estoque,caixa):
     print("Venda efetuada com sucesso!")
     dados_estoque.at[indice_fruta, 'Quantidade'] = qtd_existente - qtd
     dados_estoque.to_csv(estoque,index = False)
-    dados_caixa.loc[len(dados_caixa)] = [lista_caixa[-1] + (pVenda * qtd), conta, '25/06/2025']
+    dados_caixa.loc[len(dados_caixa)] = [lista_caixa[-1] + (pVenda * qtd), conta, datetime.now().strftime('%d/%m/%Y')]
     dados_caixa.to_csv(caixa, index=False)
     return True
     
-def compra(fruta,qtd,estoque,caixa):
+def compra(fruta,qtd,estoque,caixa,conta):
     try:
         dados_estoque = pd.read_csv(estoque)
     except (FileNotFoundError, pd.errors.EmptyDataError):
-        print("Arquivo não encontrado!")
-        return False
+        dados_estoque = pd.DataFrame(columns=['Fruta','Quantidade','pVenda','pCompra'])
+        dados_estoque.to_csv(estoque, index=False)                                   
     lista_fruta = list(dados_estoque['Fruta'])
-    lista_qtd = list(dados_estoque['Quantidade'])
+    lista_pCompra = list(dados_estoque['pCompra'])    
 
     try:
         dados_caixa = pd.read_csv(caixa)
     except (FileNotFoundError, pd.errors.EmptyDataError):
-        print("Arquivo não encontrado!")
-        # Criar estrutura inicial do DataFrame com colunas
         dados_caixa = pd.DataFrame(columns=['Caixa', 'Usuario', 'Data'])
-        # Adiciona a linha inicial com R$ 0
-        dados_caixa.loc[len(dados_caixa)] = [0, conta, '24/06/2025']
+        dados_caixa.loc[len(dados_caixa)] = [0, conta, datetime.now().strftime('%d/%m/%Y')]
         dados_caixa.to_csv(caixa, index=False)
-    lista_caixa = list(dados_caixa['Caixa'])
-    lista_pCompra = list(dados_estoque['pCompra'])
+    lista_caixa = list(dados_caixa['Caixa'])    
 
     if qtd <= 0:
         print("Quantidade inválida!")
@@ -123,22 +115,21 @@ def compra(fruta,qtd,estoque,caixa):
     # compra de fruta que já está no sistema
     elif fruta in lista_fruta:
         indice_fruta = lista_fruta.index(fruta)
-        qtd_existente = lista_qtd[indice_fruta]
+        qtd_existente = int(dados_estoque.at[indice_fruta, 'Quantidade'])
         dados_estoque.at[indice_fruta, 'Quantidade'] = qtd_existente + qtd
 
-        dados_caixa.loc[len(dados_caixa)] = [(lista_caixa[-1] - (float(lista_pCompra[indice_fruta]) * qtd)),conta,'24/06/2025']
+        dados_caixa.loc[len(dados_caixa)] = [(lista_caixa[-1] - (float(lista_pCompra[indice_fruta]) * qtd)),conta,datetime.now().strftime('%d/%m/%Y')]
     
     # cadastro de fruta no arquivo
     elif fruta not in lista_fruta:
         pVenda = float(input(f"Valor de venda de {fruta}: "))
         pCompra = float(input(f"Valor de compra de {fruta}: "))
         dados_estoque.loc[len(dados_estoque)] = [fruta, qtd, pVenda, pCompra]
-        dados_caixa.loc[len(dados_caixa)] = [(lista_caixa[-1] - (pCompra * qtd)),conta,'24/06/2025']
+        dados_caixa.loc[len(dados_caixa)] = [(lista_caixa[-1] - (pCompra * qtd)),conta,datetime.now().strftime('%d/%m/%Y')]
         print("Adicionado com sucesso!")
         
     dados_estoque.to_csv(estoque,index = False)
     dados_caixa.to_csv(caixa,index = False)
-    print("foi")
     return True
 
 def grafico(estoque):
@@ -167,7 +158,7 @@ while sistema_ativo:
 
     while opcao not in [1,2,3]:                    
         print("Opcão inválida")
-        opcao = int(input("1 - Login de usuário \n2 - Cadastrar usuário\n"))
+        opcao = int(input("1 - Login de usuário \n2 - Cadastrar usuário\n3 - Fechar programa"))
 
     match opcao:
         case 1:
@@ -190,7 +181,7 @@ while sistema_ativo:
         while True:
             print("Selecione a opção desejada")
             try:
-                opcao = int(input("1 - Vender frutas\n2 - Comprar frutas\n5 - Finalizar sistema\n"))
+                opcao = int(input("1 - Vender frutas\n2 - Comprar frutas\n3 - Gráfico do estoque\n4 - Finalizar sistema\n"))
                 break 
             except ValueError:
                 print("Valor inválido! Digite um número.")
@@ -199,16 +190,16 @@ while sistema_ativo:
             case 1:
                 fruta = input("Nome da fruta a se vender: ")
                 qtd = int(input("Quantidade de frutas a se vender: "))
-                vende_frutas(fruta,qtd,'Estoque.csv','Caixa.csv')
+                vende_frutas(fruta,qtd,'Estoque.csv','Caixa.csv',conta)
             case 2:
                 fruta = input("Nome da fruta a se comprar: ")
                 qtd = int(input("Quantidade de frutas a se comprar: "))
                 
-                compra(fruta,qtd,'Estoque.csv','Caixa.csv')
+                compra(fruta,qtd,'Estoque.csv','Caixa.csv',conta)
             case 3:
                 grafico('Estoque.csv')
-            case 5:
+            case 4:
                 sistema_ativo = False
-                break
+                break           
             case _:
                 break
