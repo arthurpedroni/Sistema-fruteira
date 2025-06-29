@@ -1,6 +1,6 @@
 # Sistema de Gestão de Fruteira
 
-Este projeto é um sistema simples de gerenciamento de estoque, caixa e usuários para uma fruteira, feito com **Python** e utilizando **pandas** e **matplotlib** para manipulação de dados e visualização gráfica.
+Este projeto é um sistema simples de gerenciamento de estoque, caixa e usuários para uma fruteira, feito com **Python** e utilizando **pandas**, **matplotlib** e **datetime** para manipulação de dados e visualização gráfica.
 
 ## Funcionalidades
 
@@ -23,9 +23,8 @@ Este projeto é um sistema simples de gerenciamento de estoque, caixa e usuário
 - Bibliotecas:
   - `pandas`
   - `matplotlib`
-  - `datetime`
 
 Você pode instalar as dependências com:
 
 ```bash
-pip install pandas matplotlib datetime
+pip install pandas matplotlib
