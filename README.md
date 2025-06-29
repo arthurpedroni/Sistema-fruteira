@@ -23,8 +23,9 @@ Este projeto é um sistema simples de gerenciamento de estoque, caixa e usuário
 - Bibliotecas:
   - `pandas`
   - `matplotlib`
+  - `datetime`
 
 Você pode instalar as dependências com:
 
 ```bash
-pip install pandas matplotlib
+pip install pandas matplotlib datetime
