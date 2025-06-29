@@ -49,10 +49,38 @@ def login(usuario, senha, arq):
 
     print("Login realizado com sucesso!")
     return True, usuario
-    
+
+def cadastrar_fruta(fruta,qtd,pVenda,pCompra,estoque,caixa,conta):
+    try:
+        dados_estoque = pd.read_csv(estoque)
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        dados_estoque = pd.DataFrame(columns=['Fruta','Quantidade','pVenda','pCompra'])
+        dados_estoque.to_csv(estoque, index=False)                                   
+    lista_fruta = list(dados_estoque['Fruta'])
+
+    try:
+        dados_caixa = pd.read_csv(caixa)
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        # Criar estrutura inicial do DataFrame com colunas
+        dados_caixa = pd.DataFrame(columns=['Caixa', 'Usuario', 'Data'])
+        # Adiciona a linha inicial com R$ 0
+        dados_caixa.loc[len(dados_caixa)] = [0, conta, datetime.now().strftime('%d/%m/%Y')]
+        dados_caixa.to_csv(caixa, index=False)
+    lista_caixa = list(dados_caixa['Caixa'])
+
+    if fruta not in lista_fruta:
+        dados_estoque.loc[len(dados_estoque)] = [fruta, qtd, pVenda, pCompra]
+        dados_caixa.loc[len(dados_caixa)] = [(lista_caixa[-1] - (pCompra * qtd)),conta,datetime.now().strftime('%d/%m/%Y')]
+        print("Adicionado com sucesso!")
+    else:
+        print("Fruta já registrada!")
+        return False
+        
+    dados_estoque.to_csv(estoque,index = False)
+    dados_caixa.to_csv(caixa,index = False)
+    return True
     
 def vende_frutas(fruta,qtd,estoque,caixa,conta):
-
     try:
         dados_estoque = pd.read_csv(estoque)
     except (FileNotFoundError, pd.errors.EmptyDataError):
@@ -83,7 +111,7 @@ def vende_frutas(fruta,qtd,estoque,caixa,conta):
         print("Não possui essa quantidade em estoque!")
         return False
     
-    pVenda = lista_pVenda[indice_fruta]
+    pVenda = float(lista_pVenda[indice_fruta])
     print("Venda efetuada com sucesso!")
     dados_estoque.at[indice_fruta, 'Quantidade'] = qtd_existente - qtd
     dados_estoque.to_csv(estoque,index = False)
@@ -117,20 +145,10 @@ def compra(fruta,qtd,estoque,caixa,conta):
         indice_fruta = lista_fruta.index(fruta)
         qtd_existente = int(dados_estoque.at[indice_fruta, 'Quantidade'])
         dados_estoque.at[indice_fruta, 'Quantidade'] = qtd_existente + qtd
-
         dados_caixa.loc[len(dados_caixa)] = [(lista_caixa[-1] - (float(lista_pCompra[indice_fruta]) * qtd)),conta,datetime.now().strftime('%d/%m/%Y')]
+        return True
+    return False
     
-    # cadastro de fruta no arquivo
-    elif fruta not in lista_fruta:
-        pVenda = float(input(f"Valor de venda de {fruta}: "))
-        pCompra = float(input(f"Valor de compra de {fruta}: "))
-        dados_estoque.loc[len(dados_estoque)] = [fruta, qtd, pVenda, pCompra]
-        dados_caixa.loc[len(dados_caixa)] = [(lista_caixa[-1] - (pCompra * qtd)),conta,datetime.now().strftime('%d/%m/%Y')]
-        print("Adicionado com sucesso!")
-        
-    dados_estoque.to_csv(estoque,index = False)
-    dados_caixa.to_csv(caixa,index = False)
-    return True
 
 def grafico(estoque):
     try:
@@ -181,24 +199,31 @@ while sistema_ativo:
         while True:
             print("Selecione a opção desejada")
             try:
-                opcao = int(input("1 - Vender frutas\n2 - Comprar frutas\n3 - Gráfico do estoque\n4 - Finalizar sistema\n"))
+                opcao = int(input("1 - Cadastrar fruta\n2 - Vender frutas\n3 - Comprar frutas\n4 - Gráfico do estoque\n5 - Finalizar sistema\n"))
                 break 
             except ValueError:
                 print("Valor inválido! Digite um número.")
                 
         match opcao:
             case 1:
-                fruta = input("Nome da fruta a se vender: ")
+                fruta = input("Nome da fruta: ").strip().capitalize()
+                qtd = int(input("Qual a quantidade da nova fruta: "))
+                pVenda = float(input("Qual o preço de venda da nova fruta: "))
+                pCompra = float(input("Qual o preço de compra da nova fruta: "))
+                cadastrar_fruta(fruta,qtd,pVenda,pCompra,'Estoque.csv','Caixa.csv',conta)
+        
+            case 2:
+                fruta = input("Nome da fruta: ").strip().capitalize()
                 qtd = int(input("Quantidade de frutas a se vender: "))
                 vende_frutas(fruta,qtd,'Estoque.csv','Caixa.csv',conta)
-            case 2:
-                fruta = input("Nome da fruta a se comprar: ")
+            case 3:
+                fruta = input("Nome da fruta: ").strip().capitalize()
                 qtd = int(input("Quantidade de frutas a se comprar: "))
                 
                 compra(fruta,qtd,'Estoque.csv','Caixa.csv',conta)
-            case 3:
-                grafico('Estoque.csv')
             case 4:
+                grafico('Estoque.csv')
+            case 5:
                 sistema_ativo = False
                 break           
             case _:
